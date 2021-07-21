@@ -1,0 +1,4 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "mochaExplorer.files": "test/**/*.{j,t}s"
+}
