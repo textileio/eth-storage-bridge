@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { ethers, upgrades, waffle } from "hardhat";
-import type { BridgeRegistry } from "../typechain/BridgeRegistry";
-import type { BridgeProvider } from "../typechain/BridgeProvider";
+import { ethers, upgrades } from "hardhat";
+import type { BridgeRegistry } from "../dist/BridgeRegistry";
+import type { BridgeProvider } from "../dist/BridgeProvider";
 
 describe("Bridge Proxies", function () {
   let provider: BridgeProvider;

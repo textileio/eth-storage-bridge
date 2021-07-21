@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers, waffle } from "hardhat";
 import type { Signer, Overrides } from "ethers";
-import type { BridgeRegistry } from "../typechain/BridgeRegistry";
+import type { BridgeRegistry } from "../dist/BridgeRegistry";
 
 const BN = ethers.BigNumber;
 

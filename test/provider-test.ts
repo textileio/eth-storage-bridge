@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers, waffle } from "hardhat";
 import type { Signer } from "ethers";
-import type { BridgeProvider } from "../typechain/BridgeProvider";
+import type { BridgeProvider } from "../dist/BridgeProvider";
 
 const BN = ethers.BigNumber;
 
