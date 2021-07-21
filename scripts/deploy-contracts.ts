@@ -17,14 +17,14 @@ async function main() {
   })) as BridgeRegistry;
   await registry.deployed();
 
-  console.log("Registry deployed to:", registry.address);
+  console.log("Registry (proxy) deployed to:", registry.address);
 
   const provider = (await upgrades.deployProxy(providerFactory, [], {
     initializer: "initialize",
   })) as BridgeProvider;
   await provider.deployed();
 
-  console.log("Provider deployed to:", registry.address);
+  console.log("Provider (proxy) deployed to:", provider.address);
 }
 
 main()
