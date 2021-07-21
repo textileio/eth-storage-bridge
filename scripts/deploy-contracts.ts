@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-import type { BridgeRegistry, BridgeProvider } from "../typechain";
+import type { BridgeRegistry, BridgeProvider } from "../dist";
 
 async function main() {
   // await run('compile');
