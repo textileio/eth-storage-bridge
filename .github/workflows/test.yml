@@ -38,5 +38,10 @@ jobs:
       - name: Test 🧪
         run: npx hardhat test
 
-      - name: Coverage 🚀
+      - name: Coverage 🙈
         run: npx hardhat coverage
+
+      - name: Deploy 🚀
+        run: |
+          npx hardhat node &
+          npx hardhat run --network localhost scripts/deploy-contracts.ts

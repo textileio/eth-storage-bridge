@@ -5,10 +5,6 @@ import type { BridgeProvider } from "../typechain/BridgeProvider";
 
 const BN = ethers.BigNumber;
 
-function timeout(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 describe("Bridge Provider", function () {
   let account: string;
   let external: Signer;
