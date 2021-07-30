@@ -13,6 +13,14 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
 
     EnumerableSetUpgradeable.AddressSet private _depositees;
 
+    struct Deposit {
+        uint256 timestamp;
+        address sender;
+        uint256 value; // Storage in wei
+    }
+
+    mapping(address => Deposit) public deposits;
+
     /**
      * @dev Proportion of deposited funds that will be given to this provider.
      *
@@ -35,14 +43,6 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
      * Can be queried via `c.apiEndpoint()`.
      */
     string public apiEndpoint;
-
-    struct Deposit {
-        uint256 timestamp;
-        address sender;
-        uint256 value; // Storage in wei
-    }
-
-    mapping(address => Deposit) private _deposits;
 
     // Upgradable
 
@@ -69,6 +69,17 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     // Public Methods
 
     /**
+     * @dev List all addresses with funds deposited with this provider.
+     */
+    function listDepositees() public view returns (address[] memory) {
+        address[] memory depositees = new address[](_depositees.length());
+        for (uint256 i = 0; i < _depositees.length(); i++) {
+            depositees[i] = _depositees.at(i);
+        }
+        return depositees;
+    }
+
+    /**
      * @dev Deposit attached funds with this provider for the given account to initiate a session.
      */
     function addDeposit(address account) public payable {
@@ -76,7 +87,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         bool ok = _depositees.add(account);
         require(ok, "BridgeProvider: account already deposited");
 
-        _deposits[account] = Deposit(block.timestamp, msg.sender, msg.value);
+        deposits[account] = Deposit(block.timestamp, msg.sender, msg.value);
 
         emit AddDeposit(msg.sender, account, msg.value);
     }
@@ -94,14 +105,14 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
      */
     function hasDeposit(address account) public view returns (bool) {
         return
-            isDepositValid(_deposits[account], block.timestamp, sessionDivisor);
+            isDepositValid(deposits[account], block.timestamp, sessionDivisor);
     }
 
     /**
      * @dev Release expired session associated with the given address.
      */
     function relDeposit(address account) public {
-        Deposit memory deposit = _deposits[account];
+        Deposit memory deposit = deposits[account];
         if (
             deposit.value > 0 &&
             !isDepositValid(deposit, block.timestamp, sessionDivisor)
@@ -112,7 +123,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
             require(sent, "BridgeProvider: error releasing funds");
             bool ok = _depositees.remove(account);
             require(ok, "BridgeProvider: error releasing funds");
-            delete _deposits[account];
+            delete deposits[account];
             emit RelDeposit(account, deposit.value);
         }
     }
