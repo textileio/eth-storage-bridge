@@ -86,7 +86,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
 
         deposits[depositee] = Deposit(block.timestamp, msg.sender, msg.value);
 
-        emit AddDeposit(msg.sender, depositee, msg.value);
+        emit AddDeposit(depositee, msg.sender, msg.value);
     }
 
     function isDepositValid(
@@ -118,14 +118,14 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
             deposit.value > 0 &&
             !isDepositValid(deposit, block.timestamp, sessionDivisor)
         ) {
-            (bool sent, ) = address(deposit.depositee).call{
+            (bool sent, ) = address(deposit.depositor).call{
                 value: deposit.value
             }("");
             require(sent, "BridgeProvider: error releasing funds");
             bool ok = _depositees.remove(depositee);
             require(ok, "BridgeProvider: error releasing funds");
             delete deposits[depositee];
-            emit ReleaseDeposit(depositee, deposit.value);
+            emit ReleaseDeposit(depositee, deposit.depositor, deposit.value);
         }
     }
 

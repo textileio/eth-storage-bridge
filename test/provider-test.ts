@@ -101,7 +101,11 @@ describe("Bridge Provider", function () {
     )
       .to.emit(provider, "AddDeposit")
       .and.to.emit(provider, "ReleaseDeposit")
-      .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
+      .withArgs(
+        account,
+        await external.getAddress(),
+        ethers.utils.parseUnits("500", "gwei")
+      );
   });
 
   it("...should return correct values when checking if an depositee has a deposit", async () => {
@@ -155,12 +159,20 @@ describe("Bridge Provider", function () {
 
     await expect(provider.releaseDeposit(account))
       .to.emit(provider, "ReleaseDeposit")
-      .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
+      .withArgs(
+        account,
+        await external.getAddress(),
+        ethers.utils.parseUnits("500", "gwei")
+      );
 
     // Should still be one left
     await expect(provider.releaseDeposits())
       .to.emit(provider, "ReleaseDeposit")
-      .withArgs(addr, ethers.utils.parseUnits("500", "gwei"));
+      .withArgs(
+        addr,
+        await external.getAddress(),
+        ethers.utils.parseUnits("500", "gwei")
+      );
 
     expect(await provider.hasDeposit(account)).to.be.false;
   });
@@ -230,8 +242,8 @@ describe("Bridge Provider", function () {
     )
       .to.emit(provider, "AddDeposit")
       .withArgs(
-        await external.getAddress(),
         account,
+        await external.getAddress(),
         ethers.utils.parseUnits("500", "gwei")
       );
 
@@ -246,7 +258,11 @@ describe("Bridge Provider", function () {
 
     await expect(provider.releaseDeposits())
       .to.emit(provider, "ReleaseDeposit")
-      .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
+      .withArgs(
+        account,
+        await external.getAddress(),
+        ethers.utils.parseUnits("500", "gwei")
+      );
   });
 
   it("...should be able to transfer ownership and have access control", async () => {
