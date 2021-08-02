@@ -74,7 +74,7 @@ describe("Bridge Provider", function () {
       provider.addDeposit(account, {
         value: ethers.utils.parseUnits("500", "gwei"),
       })
-    ).to.be.revertedWith("BridgeProvider: account already deposited");
+    ).to.be.revertedWith("BridgeProvider: depositee already deposited");
 
     // But same depositor can deposit for a different account
     await expect(() =>

@@ -15,7 +15,8 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
 
     struct Deposit {
         uint256 timestamp;
-        address sender;
+        address depositor;
+        address depositee;
         uint256 value; // Storage in wei
     }
 
@@ -59,17 +60,40 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     // Events
 
     event AddDeposit(
-        address indexed sender,
-        address indexed account,
+        address indexed depositor,
+        address indexed depositee,
         uint256 amount
     );
 
-    event RelDeposit(address indexed account, uint256 amount);
+    event RelDeposit(address indexed depositee, uint256 amount);
 
     // Public Methods
 
     /**
-     * @dev List all addresses with funds deposited with this provider.
+     * @dev List all desposits with this provider.
+     */
+    function listDeposits() public view returns (Deposit[] memory) {
+        Deposit[] memory allDeposits = new Deposit[](_depositees.length());
+        for (uint256 i = 0; i < _depositees.length(); i++) {
+            allDeposits[i] = deposits[_depositees.at(i)];
+        }
+        return allDeposits;
+    }
+
+    /**
+     * @dev Retunrs the count and sum of all deposits.
+     */
+    function countAndSumDeposits() public view returns (uint256, uint256) {
+        uint256 sum = 0;
+        uint256 count = _depositees.length();
+        for (uint256 i = 0; i < count; i++) {
+            sum += deposits[_depositees.at(i)].value;
+        }
+        return (count, sum);
+    }
+
+    /**
+     * @dev List all depositee addresses with funds deposited with this provider.
      */
     function listDepositees() public view returns (address[] memory) {
         address[] memory depositees = new address[](_depositees.length());
@@ -80,16 +104,21 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     }
 
     /**
-     * @dev Deposit attached funds with this provider for the given account to initiate a session.
+     * @dev Deposit attached funds with this provider for the given depositee to initiate a session.
      */
-    function addDeposit(address account) public payable {
+    function addDeposit(address depositee) public payable {
         require(msg.value > 0, "BridgeProvider: must include deposit > 0");
-        bool ok = _depositees.add(account);
-        require(ok, "BridgeProvider: account already deposited");
+        bool ok = _depositees.add(depositee);
+        require(ok, "BridgeProvider: depositee already deposited");
 
-        deposits[account] = Deposit(block.timestamp, msg.sender, msg.value);
+        deposits[depositee] = Deposit(
+            block.timestamp,
+            msg.sender,
+            depositee,
+            msg.value
+        );
 
-        emit AddDeposit(msg.sender, account, msg.value);
+        emit AddDeposit(msg.sender, depositee, msg.value);
     }
 
     function isDepositValid(
@@ -101,30 +130,34 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     }
 
     /**
-     * @dev Return whether the given address has funds deposited with this provider.
+     * @dev Return whether the given depositee has funds deposited with this provider.
      */
-    function hasDeposit(address account) public view returns (bool) {
+    function hasDeposit(address depositee) public view returns (bool) {
         return
-            isDepositValid(deposits[account], block.timestamp, sessionDivisor);
+            isDepositValid(
+                deposits[depositee],
+                block.timestamp,
+                sessionDivisor
+            );
     }
 
     /**
-     * @dev Release expired session associated with the given address.
+     * @dev Release expired session associated with the given depositee.
      */
-    function relDeposit(address account) public {
-        Deposit memory deposit = deposits[account];
+    function relDeposit(address depositee) public {
+        Deposit memory deposit = deposits[depositee];
         if (
             deposit.value > 0 &&
             !isDepositValid(deposit, block.timestamp, sessionDivisor)
         ) {
-            (bool sent, ) = address(deposit.sender).call{value: deposit.value}(
-                ""
-            );
+            (bool sent, ) = address(deposit.depositor).call{
+                value: deposit.value
+            }("");
             require(sent, "BridgeProvider: error releasing funds");
-            bool ok = _depositees.remove(account);
+            bool ok = _depositees.remove(depositee);
             require(ok, "BridgeProvider: error releasing funds");
-            delete deposits[account];
-            emit RelDeposit(account, deposit.value);
+            delete deposits[depositee];
+            emit RelDeposit(depositee, deposit.value);
         }
     }
 
