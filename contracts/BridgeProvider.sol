@@ -15,7 +15,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
 
     struct Deposit {
         uint256 timestamp;
-        address depositer;
+        address depositor;
         address depositee;
         uint256 value; // Storage in wei
     }
@@ -60,7 +60,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     // Events
 
     event AddDeposit(
-        address indexed depositer,
+        address indexed depositor,
         address indexed depositee,
         uint256 amount
     );
@@ -138,7 +138,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
             deposit.value > 0 &&
             !isDepositValid(deposit, block.timestamp, sessionDivisor)
         ) {
-            (bool sent, ) = address(deposit.depositer).call{
+            (bool sent, ) = address(deposit.depositor).call{
                 value: deposit.value
             }("");
             require(sent, "BridgeProvider: error releasing funds");
