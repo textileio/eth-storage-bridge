@@ -30,7 +30,7 @@ describe("Bridge Proxies", function () {
 
     expect(await registry.listProviders()).to.include(provider.address);
 
-    tx = await registry.delProvider(provider.address);
+    tx = await registry.removeProvider(provider.address);
 
     // wait until the transaction is mined
     await tx.wait();
@@ -53,7 +53,7 @@ describe("Bridge Proxies", function () {
     await ethers.provider.send("evm_increaseTime", [5]);
     await ethers.provider.send("evm_mine", []);
 
-    tx = await provider.relDeposit(registry.address);
+    tx = await provider.releaseDeposit(registry.address);
     await tx.wait();
 
     expect(await provider.hasDeposit(registry.address)).to.be.false;
