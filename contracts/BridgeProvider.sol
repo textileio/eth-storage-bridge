@@ -81,6 +81,18 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     }
 
     /**
+     * @dev Retunrs the count and sum of all deposits.
+     */
+    function countAndSumDeposits() public view returns (uint256, uint256) {
+        uint256 sum = 0;
+        uint256 count = _depositees.length();
+        for (uint256 i = 0; i < count; i++) {
+            sum += deposits[_depositees.at(i)].value;
+        }
+        return (count, sum);
+    }
+
+    /**
      * @dev List all depositee addresses with funds deposited with this provider.
      */
     function listDepositees() public view returns (address[] memory) {
