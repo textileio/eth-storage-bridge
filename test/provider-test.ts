@@ -61,7 +61,7 @@ describe("Bridge Provider", function () {
     expect(await waffle.provider.getBalance(provider.address)).to.equal(0);
   });
 
-  it("...should only allow one deposit (per address) at a time", async () => {
+  it("...should only allow one deposit (per depositee) at a time", async () => {
     const tx = await provider.connect(external).addDeposit(account, {
       value: ethers.utils.parseUnits("500", "gwei"),
     });
@@ -69,14 +69,14 @@ describe("Bridge Provider", function () {
 
     const addr = await external.getAddress();
 
-    // A different depositor, but same address
+    // A different depositor, but same depositee
     await expect(
       provider.addDeposit(account, {
         value: ethers.utils.parseUnits("500", "gwei"),
       })
-    ).to.be.revertedWith("BridgeProvider: account already deposited");
+    ).to.be.revertedWith("BridgeProvider: depositee already has deposit");
 
-    // But same depositor can deposit for a different account
+    // But same depositor can deposit for a different depositee
     await expect(() =>
       provider.connect(external).addDeposit(addr, {
         value: ethers.utils.parseUnits("500", "gwei"),
@@ -84,7 +84,27 @@ describe("Bridge Provider", function () {
     ).to.changeEtherBalance(provider, ethers.utils.parseUnits("500", "gwei"));
   });
 
-  it("...should return correct values when checking if an account has a deposit", async () => {
+  it("...should release deposit if adding over expired deposit", async () => {
+    const tx = await provider.connect(external).addDeposit(account, {
+      value: ethers.utils.parseUnits("500", "gwei"),
+    });
+    await tx.wait();
+
+    // Add 5 seconds
+    await ethers.provider.send("evm_increaseTime", [5]);
+    await ethers.provider.send("evm_mine", []);
+
+    await expect(
+      provider.connect(external).addDeposit(account, {
+        value: ethers.utils.parseUnits("500", "gwei"),
+      })
+    )
+      .to.emit(provider, "AddDeposit")
+      .and.to.emit(provider, "ReleaseDeposit")
+      .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
+  });
+
+  it("...should return correct values when checking if an depositee has a deposit", async () => {
     // No deposits at all yet, should default to false
     expect(await provider.hasDeposit(account)).to.be.false;
 
@@ -95,9 +115,9 @@ describe("Bridge Provider", function () {
 
     expect(await provider.hasDeposit(account)).to.be.true;
 
-    await expect(provider.relDeposit(account)).to.not.emit(
+    await expect(provider.releaseDeposit(account)).to.not.emit(
       provider,
-      "RelDeposit"
+      "ReleaseDeposit"
     );
 
     expect(await provider.hasDeposit(account)).to.be.true;
@@ -109,7 +129,7 @@ describe("Bridge Provider", function () {
     expect(await provider.hasDeposit(account)).to.be.false;
 
     // Has deposit should (still) return false after release
-    await expect(() => provider.relDeposits()).to.changeEtherBalance(
+    await expect(() => provider.releaseDeposits()).to.changeEtherBalance(
       provider,
       ethers.utils.parseUnits("-500", "gwei")
     );
@@ -133,19 +153,19 @@ describe("Bridge Provider", function () {
     await ethers.provider.send("evm_increaseTime", [6]);
     await ethers.provider.send("evm_mine", []);
 
-    await expect(provider.relDeposit(account))
-      .to.emit(provider, "RelDeposit")
+    await expect(provider.releaseDeposit(account))
+      .to.emit(provider, "ReleaseDeposit")
       .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
 
     // Should still be one left
-    await expect(provider.relDeposits())
-      .to.emit(provider, "RelDeposit")
+    await expect(provider.releaseDeposits())
+      .to.emit(provider, "ReleaseDeposit")
       .withArgs(addr, ethers.utils.parseUnits("500", "gwei"));
 
     expect(await provider.hasDeposit(account)).to.be.false;
   });
 
-  it("...should emit multiple events when releasing funds for multiple accounts", async () => {
+  it("...should emit multiple events when releasing funds for multiple depositee accounts", async () => {
     let tx = await provider.connect(external).addDeposit(account, {
       value: ethers.utils.parseUnits("500", "gwei"),
     });
@@ -162,12 +182,12 @@ describe("Bridge Provider", function () {
     await ethers.provider.send("evm_mine", []);
 
     // Emit the event twice
-    await expect(provider.relDeposits())
-      .to.emit(provider, "RelDeposit")
-      .and.to.emit(provider, "RelDeposit");
+    await expect(provider.releaseDeposits())
+      .to.emit(provider, "ReleaseDeposit")
+      .and.to.emit(provider, "ReleaseDeposit");
   });
 
-  it("...should change balances in accounts accordingly", async () => {
+  it("...should change balances in depositee accounts accordingly", async () => {
     // initialBalance should be zero
     const expectedBalance = BN.from(0);
     const initialBalance = BN.from(
@@ -187,7 +207,7 @@ describe("Bridge Provider", function () {
       ]
     );
 
-    await expect(() => provider.relDeposits()).to.changeEtherBalance(
+    await expect(() => provider.releaseDeposits()).to.changeEtherBalance(
       external,
       0
     );
@@ -196,7 +216,7 @@ describe("Bridge Provider", function () {
     await ethers.provider.send("evm_increaseTime", [5]);
     await ethers.provider.send("evm_mine", []);
 
-    await expect(() => provider.relDeposits()).to.changeEtherBalance(
+    await expect(() => provider.releaseDeposits()).to.changeEtherBalance(
       external,
       ethers.utils.parseUnits("500", "gwei")
     );
@@ -215,14 +235,17 @@ describe("Bridge Provider", function () {
         ethers.utils.parseUnits("500", "gwei")
       );
 
-    await expect(provider.relDeposits()).to.not.emit(provider, "RelDeposit");
+    await expect(provider.releaseDeposits()).to.not.emit(
+      provider,
+      "ReleaseDeposit"
+    );
 
     // Add 5 seconds
     await ethers.provider.send("evm_increaseTime", [5]);
     await ethers.provider.send("evm_mine", []);
 
-    await expect(provider.relDeposits())
-      .to.emit(provider, "RelDeposit")
+    await expect(provider.releaseDeposits())
+      .to.emit(provider, "ReleaseDeposit")
       .withArgs(account, ethers.utils.parseUnits("500", "gwei"));
   });
 

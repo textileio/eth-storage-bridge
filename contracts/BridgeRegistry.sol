@@ -23,7 +23,7 @@ contract BridgeRegistry is Initializable, OwnableUpgradeable {
     // Events
 
     event AddProvider(address indexed provider);
-    event DelProvider(address indexed provider);
+    event RemoveProvider(address indexed provider);
 
     // Methods
 
@@ -40,8 +40,8 @@ contract BridgeRegistry is Initializable, OwnableUpgradeable {
         return providers;
     }
 
-    function delProvider(address provider) public onlyOwner {
+    function removeProvider(address provider) public onlyOwner {
         _providers.remove(provider);
-        emit DelProvider(provider);
+        emit RemoveProvider(provider);
     }
 }

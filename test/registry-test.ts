@@ -56,7 +56,7 @@ describe("Bridge Registry", function () {
     await tx.wait();
 
     await expect(
-      registry.connect(external).delProvider(providerAddr)
+      registry.connect(external).removeProvider(providerAddr)
     ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 
@@ -68,11 +68,11 @@ describe("Bridge Registry", function () {
     let providers = await registry.listProviders();
     expect(providers).to.have.lengthOf(1);
 
-    tx = await registry.delProvider(providerAddr);
+    tx = await registry.removeProvider(providerAddr);
     await tx.wait();
 
-    await expect(registry.delProvider(providerAddr))
-      .to.emit(registry, "DelProvider")
+    await expect(registry.removeProvider(providerAddr))
+      .to.emit(registry, "RemoveProvider")
       .withArgs(providerAddr);
 
     // Should really wait for transaction here?
@@ -114,7 +114,7 @@ describe("Bridge Registry", function () {
       initialBalance.toString()
     );
 
-    const tx = await registry.delProvider(providerAddr);
+    const tx = await registry.removeProvider(providerAddr);
     await tx.wait();
 
     expect(await waffle.provider.getBalance(registry.address)).to.equal(
