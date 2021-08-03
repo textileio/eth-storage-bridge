@@ -2,10 +2,12 @@ import { task, HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-upgrades";
 // https://github.com/ethereum-ts/TypeChain/issues/406
+import "hardhat-local-networks-config-plugin";
 import "@typechain/hardhat";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
@@ -28,12 +30,7 @@ const config: HardhatUserConfig & { typechain: { outDir: string } } = {
   typechain: {
     outDir: "dist",
   },
-  networks: {
-    rinkeby: {
-      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: [`0x${process.env.RINKEBY_PRIVATE_KEY}`],
-    },
-  },
+  localNetworksConfig: path.resolve("./networks.json"),
 };
 
 export default config;

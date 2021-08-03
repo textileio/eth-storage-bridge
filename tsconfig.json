@@ -10,9 +10,10 @@
   },
   "include": [
     "./scripts",
-    "./test"
+    "./test",
   ],
   "files": [
-    "./hardhat.config.ts"
+    "./hardhat.config.ts",
+    "node_modules/hardhat-local-networks-config-plugin/src/type-extensions.d.ts"
   ]
 }

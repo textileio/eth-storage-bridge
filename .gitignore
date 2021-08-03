@@ -6,3 +6,4 @@ coverage
 coverage.json
 .openzeppelin/unknown*.json
 .env
+networks.json
