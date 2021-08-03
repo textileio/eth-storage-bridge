@@ -5,6 +5,9 @@ import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -24,6 +27,12 @@ const config: HardhatUserConfig & { typechain: { outDir: string } } = {
   solidity: "0.8.4",
   typechain: {
     outDir: "dist",
+  },
+  networks: {
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.RINKEBY_PRIVATE_KEY}`],
+    },
   },
 };
 

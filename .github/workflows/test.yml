@@ -44,4 +44,4 @@ jobs:
       - name: Deploy 🚀
         run: |
           npx hardhat node &
-          npx hardhat run --network localhost scripts/deploy-contracts.ts
+          npx hardhat run scripts/deploy.ts --network localhost
