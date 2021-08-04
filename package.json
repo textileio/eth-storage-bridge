@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.2.0",
     "@openzeppelin/contracts-upgradeable": "^4.2.0",
@@ -35,7 +36,6 @@
     "ethereum-waffle": "^3.4.0",
     "hardhat": "^2.4.3",
     "hardhat-gas-reporter": "^1.0.4",
-    "hardhat-local-networks-config-plugin": "^0.0.6",
     "install": "^0.13.0",
     "mocha": "^7.2.0",
     "npm": "^7.20.3",

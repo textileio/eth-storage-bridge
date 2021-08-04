@@ -1,13 +1,14 @@
 import { task, HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 // https://github.com/ethereum-ts/TypeChain/issues/406
-import "hardhat-local-networks-config-plugin";
 import "@typechain/hardhat";
 import "solidity-coverage";
 import "hardhat-gas-reporter";
 import dotenv from "dotenv";
-import path from "path";
+
+const privateKey = process.env.PRIVATE_KEY;
 
 dotenv.config();
 
@@ -24,13 +25,30 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-const config: HardhatUserConfig & { typechain: { outDir: string } } = {
+const config: HardhatUserConfig & {
+  typechain: { outDir: string };
+  etherscan: { apiKey: string };
+} = {
   defaultNetwork: "hardhat",
-  solidity: "0.8.4",
+  solidity: "0.8.2",
   typechain: {
     outDir: "dist",
   },
-  localNetworksConfig: path.resolve("./networks.json"),
+  networks: {
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${
+        process.env.ALCHEMY_API_KEY ?? ""
+      }`,
+      accounts: privateKey ? [privateKey] : undefined,
+    },
+    polygon: {
+      url: "https://rpc-mumbai.maticvigil.com",
+      accounts: privateKey ? [privateKey] : undefined,
+    },
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
+  },
 };
 
 export default config;
