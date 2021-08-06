@@ -41,8 +41,12 @@ const config: HardhatUserConfig & {
       }`,
       accounts: privateKey ? [privateKey] : undefined,
     },
-    polygon: {
+    mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
+      accounts: privateKey ? [privateKey] : undefined,
+    },
+    polygon: {
+      url: "https://rpc-mainnet.maticvigil.com",
       accounts: privateKey ? [privateKey] : undefined,
     },
   },
