@@ -4,6 +4,6 @@ artifacts
 dist
 coverage
 coverage.json
-.openzeppelin/unknown*.json
+.openzeppelin/unknown-*1337.json
 .env
 secrets.json
