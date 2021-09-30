@@ -22,11 +22,11 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     mapping(address => Deposit) public deposits;
 
     /**
-     * @dev Proportion of deposited funds that will be given to this provider.
+     * @dev percentage of deposited funds that will be kept by this provider.
      *
-     * Can be queried via `c.providerProportion()`.
+     * Can be queried via `c.providerPercentage()`.
      */
-    uint256 public providerProportion;
+    uint8 public providerPercentage;
 
     /**
      * @dev Divisor used to calculate session expiration.
@@ -51,7 +51,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         __Ownable_init_unchained();
 
         // TODO: Use this!
-        providerProportion = 0 gwei;
+        providerPercentage = 0;
         sessionDivisor = 100 gwei; // 1 second of session time per 100 gwei
         apiEndpoint = "https://broker.staging.textile.dev";
     }
@@ -119,7 +119,7 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
             !isDepositValid(deposit, block.timestamp, sessionDivisor)
         ) {
             uint256 value = deposit.value;
-            uint256 cut = value * providerProportion;
+            uint256 cut = (value * providerPercentage) / 100;
             if (cut > 0) {
                 if (value < cut) {
                     value = 0;
@@ -155,7 +155,11 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         apiEndpoint = a;
     }
 
-    function setProviderProportion(uint256 p) public onlyOwner {
-        providerProportion = p;
+    function setProviderPercentage(uint8 p) public onlyOwner {
+        require(
+            p >= 0 && p <= 100,
+            "percentage must be an integer in the range [0, 100]"
+        );
+        providerPercentage = p;
     }
 }

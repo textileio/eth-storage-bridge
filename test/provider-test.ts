@@ -30,7 +30,7 @@ describe("Bridge Provider", function () {
     expect(await provider.apiEndpoint()).to.equal(
       "https://broker.staging.textile.dev"
     );
-    expect(await provider.providerProportion()).to.equal(0); // 0 gwei
+    expect(await provider.providerPercentage()).to.equal(0); // 0 gwei
     expect(await provider.sessionDivisor()).to.equal(
       ethers.utils.parseUnits("100", "gwei")
     ); // 100 gwei
@@ -42,9 +42,9 @@ describe("Bridge Provider", function () {
     ).to.be.revertedWith("Ownable: caller is not the owner");
     await expect(provider.setApiEndpoint("noop")).to.not.be.reverted;
     await expect(
-      provider.connect(external).setProviderProportion(0)
+      provider.connect(external).setProviderPercentage(0)
     ).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(provider.setProviderProportion(0)).to.not.be.reverted;
+    await expect(provider.setProviderPercentage(0)).to.not.be.reverted;
     await expect(
       provider.connect(external).setSessionDivisor(10000)
     ).to.be.revertedWith("Ownable: caller is not the owner");
@@ -231,6 +231,46 @@ describe("Bridge Provider", function () {
     await expect(() => provider.releaseDeposits()).to.changeEtherBalance(
       external,
       ethers.utils.parseUnits("500", "gwei")
+    );
+  });
+
+  it("...should keep provider proportion in contract after release", async () => {
+    // initialBalance should be zero
+    const expectedBalance = BN.from(0);
+    const initialBalance = BN.from(
+      await waffle.provider.getBalance(provider.address)
+    );
+    expect(initialBalance.toString()).to.equal(expectedBalance.toString());
+
+    await expect(provider.setProviderPercentage(50)).to.not.be.reverted;
+
+    await expect(() =>
+      provider.connect(external).addDeposit(account, {
+        value: ethers.utils.parseUnits("500", "gwei"),
+      })
+    ).to.changeEtherBalances(
+      [provider, external],
+      [
+        ethers.utils.parseUnits("500", "gwei"),
+        ethers.utils.parseUnits("-500", "gwei"),
+      ]
+    );
+
+    await expect(() => provider.releaseDeposit(account)).to.changeEtherBalance(
+      external,
+      0
+    );
+
+    // Add 5 seconds
+    await ethers.provider.send("evm_increaseTime", [5]);
+    await ethers.provider.send("evm_mine", []);
+
+    await expect(() => provider.releaseDeposits()).to.changeEtherBalances(
+      [provider, external],
+      [
+        ethers.utils.parseUnits("-250", "gwei"),
+        ethers.utils.parseUnits("250", "gwei"),
+      ]
     );
   });
 
