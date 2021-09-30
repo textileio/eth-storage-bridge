@@ -70,6 +70,11 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         uint256 amount
     );
 
+    event StoreCID(
+        address indexed depositee,
+        string cid
+    );
+
     // Public Methods
 
     /**
@@ -136,6 +141,19 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         for (uint256 i = 0; i < _depositees.length(); i++) {
             releaseDeposit(_depositees.at(i));
         }
+    }
+
+    /**
+     * @dev Send an on-chain message to the provider to store a CID
+     */
+    function storeCID(string memory cid) public {
+        bool ok = isDepositValid(
+            deposits[msg.sender],
+            block.timestamp,
+            sessionDivisor
+        );
+        require(ok, "Sender must lock funds before requesting storage");
+        emit StoreCID(msg.sender, cid);
     }
 
     // Access Controlled Methods
