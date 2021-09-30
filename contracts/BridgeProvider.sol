@@ -70,6 +70,22 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
         uint256 amount
     );
 
+    enum Status {
+        Unknown,
+        Batching,
+        Preparing,
+        Auctioning,
+        DealMaking,
+        Success,
+        Error
+    }
+
+    event StorageUpdate(
+        Status indexed status,
+        string indexed minerid,
+        string indexed dealid
+    );
+
     // Public Methods
 
     /**
@@ -146,6 +162,14 @@ contract BridgeProvider is Initializable, OwnableUpgradeable {
     }
 
     // Access Controlled Methods
+
+    function storageUpdate(
+        Status status,
+        string memory minerid,
+        string memory dealid
+    ) public onlyOwner {
+        StorageUpdate(status, minerid, dealid);
+    }
 
     function setSessionDivisor(uint256 m) public onlyOwner {
         sessionDivisor = m;

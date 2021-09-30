@@ -305,6 +305,21 @@ describe("Bridge Provider", function () {
       );
   });
 
+  it("...should emit events for storage updates", async () => {
+    // Only the owner should be able to call storageUpdate
+    await expect(
+      provider.connect(external).storageUpdate(0, "fakeMiner", "fakeDealId")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    // Should pretty much just produce events and that's it
+    await expect(provider.storageUpdate(5, "fakeMiner", "fakeDealId"))
+      .to.emit(provider, "StorageUpdate")
+      .withArgs(5, "fakeMiner", "fakeDealId");
+    // Should revert if supplying a false status
+    await expect(
+      provider.connect(external).storageUpdate(9, "fakeMiner", "fakeDealId")
+    ).to.be.revertedWith("function was called with incorrect parameters");
+  });
+
   it("...should be able to transfer ownership and have access control", async () => {
     let tx = await provider.setApiEndpoint("fake");
     await tx.wait();
