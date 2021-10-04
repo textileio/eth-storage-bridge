@@ -10,7 +10,7 @@ async function main() {
   // await run('compile');
 
   const registryFactory = await ethers.getContractFactory("BridgeRegistry");
-  const providerFactory = await ethers.getContractFactory("BridgeProviderV1");
+  const providerFactory = await ethers.getContractFactory("BridgeProvider");
 
   const registry = (await upgrades.deployProxy(registryFactory, [], {
     initializer: "initialize",

@@ -30,7 +30,7 @@ describe("Bridge Provider", function () {
     expect(await provider.apiEndpoint()).to.equal(
       "https://broker.staging.textile.dev"
     );
-    expect(await provider.providerPercentage()).to.equal(0); // 0 gwei
+    expect(await provider.providerProportion()).to.equal(0);
     expect(await provider.sessionDivisor()).to.equal(
       ethers.utils.parseUnits("100", "gwei")
     ); // 100 gwei
@@ -42,9 +42,9 @@ describe("Bridge Provider", function () {
     ).to.be.revertedWith("Ownable: caller is not the owner");
     await expect(provider.setApiEndpoint("noop")).to.not.be.reverted;
     await expect(
-      provider.connect(external).setProviderPercentage(0)
+      provider.connect(external).setProviderProportion(0)
     ).to.be.revertedWith("Ownable: caller is not the owner");
-    await expect(provider.setProviderPercentage(0)).to.not.be.reverted;
+    await expect(provider.setProviderProportion(0)).to.not.be.reverted;
     await expect(
       provider.connect(external).setSessionDivisor(10000)
     ).to.be.revertedWith("Ownable: caller is not the owner");
@@ -242,7 +242,7 @@ describe("Bridge Provider", function () {
     );
     expect(initialBalance.toString()).to.equal(expectedBalance.toString());
 
-    await expect(provider.setProviderPercentage(50)).to.not.be.reverted;
+    await expect(provider.setProviderProportion(50)).to.not.be.reverted;
 
     await expect(() =>
       provider.connect(external).addDeposit(account, {
@@ -311,6 +311,8 @@ describe("Bridge Provider", function () {
       provider.connect(external).storageUpdate(0, "fakeMiner", "fakeDealId")
     ).to.be.revertedWith("Ownable: caller is not the owner");
     // Should pretty much just produce events and that's it
+    // Note that our build process does not carry over enums into Typescript, so clients/SDKs
+    // need to provide these enums themselves (which they already do)
     await expect(provider.storageUpdate(5, "fakeMiner", "fakeDealId"))
       .to.emit(provider, "StorageUpdate")
       .withArgs(5, "fakeMiner", "fakeDealId");

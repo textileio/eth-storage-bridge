@@ -1,33 +1,30 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-import type { BridgeRegistry } from "../dist";
+import type { BridgeProvider } from "../dist/BridgeProvider";
+import type { BridgeProviderV1 } from "../dist/BridgeProviderV1";
 
 describe("Bridge Upgrades", function () {
   it("should upgrade safely and successfully", async function () {
-    const registryFactory = await ethers.getContractFactory("BridgeRegistry");
+    // const registryFactory = await ethers.getContractFactory("BridgeRegistry");
+    const providerFactoryV1 = await ethers.getContractFactory(
+      "BridgeProviderV1"
+    );
+    // Original provider
     const providerFactory = await ethers.getContractFactory("BridgeProvider");
-
-    const registry = await upgrades.deployProxy(registryFactory, [], {
+    const providerV1 = (await upgrades.deployProxy(providerFactoryV1, [], {
       initializer: "initialize",
-    });
-    await registry.deployed();
+    })) as BridgeProviderV1;
+    await providerV1.deployed();
 
-    const provider = await upgrades.deployProxy(providerFactory, [], {
-      initializer: "initialize",
-    });
-    await registry.deployed();
+    // Upgrade provider
+    const upgraded = (await upgrades.upgradeProxy(
+      providerV1.address,
+      providerFactory
+    )) as BridgeProvider;
 
-    const upgradedRegistry = (await upgrades.upgradeProxy(
-      registry.address,
-      registryFactory
-    )) as BridgeRegistry;
-
-    await upgrades.upgradeProxy(provider.address, providerFactory);
-
-    const tx = await registry.addProvider(provider.address);
+    const tx = await providerV1.setApiEndpoint("blah");
     await tx.wait();
 
-    const providers = await upgradedRegistry.listProviders();
-    expect(providers).to.have.lengthOf(1);
+    expect(await upgraded.apiEndpoint()).to.equal("blah");
   });
 });
