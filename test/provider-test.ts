@@ -30,7 +30,7 @@ describe("Bridge Provider", function () {
     expect(await provider.apiEndpoint()).to.equal(
       "https://broker.staging.textile.dev"
     );
-    expect(await provider.providerProportion()).to.equal(0); // 0 gwei
+    expect(await provider.providerProportion()).to.equal(0);
     expect(await provider.sessionDivisor()).to.equal(
       ethers.utils.parseUnits("100", "gwei")
     ); // 100 gwei
@@ -234,6 +234,46 @@ describe("Bridge Provider", function () {
     );
   });
 
+  it("...should keep provider proportion in contract after release", async () => {
+    // initialBalance should be zero
+    const expectedBalance = BN.from(0);
+    const initialBalance = BN.from(
+      await waffle.provider.getBalance(provider.address)
+    );
+    expect(initialBalance.toString()).to.equal(expectedBalance.toString());
+
+    await expect(provider.setProviderProportion(50)).to.not.be.reverted;
+
+    await expect(() =>
+      provider.connect(external).addDeposit(account, {
+        value: ethers.utils.parseUnits("500", "gwei"),
+      })
+    ).to.changeEtherBalances(
+      [provider, external],
+      [
+        ethers.utils.parseUnits("500", "gwei"),
+        ethers.utils.parseUnits("-500", "gwei"),
+      ]
+    );
+
+    await expect(() => provider.releaseDeposit(account)).to.changeEtherBalance(
+      external,
+      0
+    );
+
+    // Add 5 seconds
+    await ethers.provider.send("evm_increaseTime", [5]);
+    await ethers.provider.send("evm_mine", []);
+
+    await expect(() => provider.releaseDeposits()).to.changeEtherBalances(
+      [provider, external],
+      [
+        ethers.utils.parseUnits("-250", "gwei"),
+        ethers.utils.parseUnits("250", "gwei"),
+      ]
+    );
+  });
+
   it("...should emit events for adding and releasing deposits", async () => {
     await expect(
       provider.connect(external).addDeposit(account, {
@@ -263,6 +303,23 @@ describe("Bridge Provider", function () {
         await external.getAddress(),
         ethers.utils.parseUnits("500", "gwei")
       );
+  });
+
+  it("...should emit events for storage updates", async () => {
+    // Only the owner should be able to call storageUpdate
+    await expect(
+      provider.connect(external).storageUpdate(0, "fakeMiner", "fakeDealId")
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    // Should pretty much just produce events and that's it
+    // Note that our build process does not carry over enums into Typescript, so clients/SDKs
+    // need to provide these enums themselves (which they already do)
+    await expect(provider.storageUpdate(5, "fakeMiner", "fakeDealId"))
+      .to.emit(provider, "StorageUpdate")
+      .withArgs(5, "fakeMiner", "fakeDealId");
+    // Should revert if supplying a false status
+    await expect(
+      provider.connect(external).storageUpdate(9, "fakeMiner", "fakeDealId")
+    ).to.be.revertedWith("function was called with incorrect parameters");
   });
 
   it("...should be able to transfer ownership and have access control", async () => {

@@ -38,7 +38,6 @@
     "hardhat-gas-reporter": "^1.0.4",
     "install": "^0.13.0",
     "mocha": "^7.2.0",
-    "npm": "^7.20.3",
     "prettier": "^2.3.2",
     "solidity-coverage": "^0.7.16",
     "ts-generator": "^0.1.1",
